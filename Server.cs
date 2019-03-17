@@ -9,8 +9,9 @@ namespace Server
     public class Server
     {
         ITransport transport;
-        private delegate void Command(byte[] data);
+        private delegate float Command(float firstNum, float secondNum);
         Dictionary<byte, Command> commandsTable = new Dictionary<byte, Command>();
+        public float Result;
 
         public Server(ITransport transport)
         {
@@ -25,58 +26,51 @@ namespace Server
         {
             while (true)
             {
-                byte[] data = transport.Receive();
+                SingleStep();
+            }
+        }
 
-                if (data != null)
-                {
-                    byte command = data[0];
-                    commandsTable[command](data);
-                }
+        public void SingleStep()
+        {
+            byte[] data = transport.Receive();
+
+            if (data != null)
+            {
+                byte command = data[0];
+                float firstNum = BitConverter.ToSingle(data, 1);
+                float secondNum = BitConverter.ToSingle(data, 5);
+
+                Result = commandsTable[command](firstNum, secondNum);
+
+                Packet response = new Packet(0, Result);
+                byte[] returnData = response.GetData();
+                transport.Send(returnData);
             }
         }
         
-        void Addition(byte[] data)
+        public float Addition(float firstNum, float secondNum)
         {
-            float firstNum = BitConverter.ToSingle(data, 1);
-            float secondNum = BitConverter.ToSingle(data, 5);
-
-            float result = firstNum + secondNum;
-            Packet response = new Packet(result);
-            byte[] returnData = response.GetData();
-            transport.Send(returnData);
+            return firstNum + secondNum;
         }
 
-        void Subtraction(byte[] data)
+        public float Subtraction(float firstNum, float secondNum)
         {
-            float firstNum = BitConverter.ToSingle(data, 1);
-            float secondNum = BitConverter.ToSingle(data, 5);
-
-            float result = firstNum - secondNum;
-            Packet response = new Packet(result);
-            byte[] returnData = response.GetData();
-            transport.Send(returnData);
+            return firstNum - secondNum;
         }
 
-        void Product(byte[] data)
+        public float Product(float firstNum, float secondNum)
         {
-            float firstNum = BitConverter.ToSingle(data, 1);
-            float secondNum = BitConverter.ToSingle(data, 5);
-
-            float result = firstNum * secondNum;
-            Packet response = new Packet(result);
-            byte[] returnData = response.GetData();
-            transport.Send(returnData);
+            return firstNum * secondNum;
         }
 
-        void Division(byte[] data)
+        public float Division(float firstNum, float secondNum)
         {
-            float firstNum = BitConverter.ToSingle(data, 1);
-            float secondNum = BitConverter.ToSingle(data, 5);
+            if(secondNum == 0)
+            {
+                throw new Exception("Cannot divide by 0");
+            }
 
-            float result = firstNum / secondNum;
-            Packet response = new Packet(result);
-            byte[] returnData = response.GetData();
-            transport.Send(returnData);
+            return firstNum / secondNum;
         }
     }
 }

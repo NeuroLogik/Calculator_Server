@@ -7,7 +7,7 @@ using System.IO;
 
 namespace Server
 {
-    class Packet
+    public class Packet
     {
         MemoryStream stream;
         BinaryWriter writer;
@@ -18,8 +18,10 @@ namespace Server
             writer = new BinaryWriter(stream);
         }
 
-        public Packet(params object[] elements) : this()
+        public Packet(byte command, params object[] elements) : this()
         {
+            writer.Write(command);
+
             foreach(object element in elements)
             {
                 if (element is float)
