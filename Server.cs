@@ -12,6 +12,9 @@ namespace Server
         private delegate float Command(float firstNum, float secondNum);
         Dictionary<byte, Command> commandsTable = new Dictionary<byte, Command>();
         public float Result;
+        public float FirstNum, SecondNum;
+        public Packet Response;
+        public byte[] ReturnData;
 
         public Server(ITransport transport)
         {
@@ -37,14 +40,14 @@ namespace Server
             if (data != null)
             {
                 byte command = data[0];
-                float firstNum = BitConverter.ToSingle(data, 1);
-                float secondNum = BitConverter.ToSingle(data, 5);
+                FirstNum = BitConverter.ToSingle(data, 1);
+                SecondNum = BitConverter.ToSingle(data, 5);
 
-                Result = commandsTable[command](firstNum, secondNum);
+                Result = commandsTable[command](FirstNum, SecondNum);
 
-                Packet response = new Packet(0, Result);
-                byte[] returnData = response.GetData();
-                transport.Send(returnData);
+                Response = new Packet(0, Result);
+                ReturnData = Response.GetData();
+                transport.Send(ReturnData);
             }
         }
         
